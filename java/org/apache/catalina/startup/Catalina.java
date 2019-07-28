@@ -643,6 +643,7 @@ public class Catalina {
 
         // Start the new server
         try {
+            //server 初始化
             getServer().init();
         } catch (LifecycleException e) {
             if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {
@@ -709,7 +710,7 @@ public class Catalina {
         }
 
         // Register shutdown hook
-        if (useShutdownHook) {// 注册钩子,用于安全关闭tomcat
+        if (useShutdownHook) {// 注册钩子,用于关闭server
             if (shutdownHook == null) {
                 shutdownHook = new CatalinaShutdownHook();
             }
@@ -726,7 +727,9 @@ public class Catalina {
         }
 
         if (await) {
+            //while(true) 启动一个serverSocket 默认8005,等待关闭命令
             await();
+            //server 停止
             stop();
         }
     }

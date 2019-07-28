@@ -16,6 +16,21 @@
  */
 package org.apache.tomcat.util.net;
 
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
+import org.apache.tomcat.jni.*;
+import org.apache.tomcat.jni.Error;
+import org.apache.tomcat.jni.SSLContext;
+import org.apache.tomcat.jni.SSLContext.SNICallBack;
+import org.apache.tomcat.util.ExceptionUtils;
+import org.apache.tomcat.util.buf.ByteBufferUtils;
+import org.apache.tomcat.util.collections.SynchronizedStack;
+import org.apache.tomcat.util.net.AbstractEndpoint.Acceptor.AcceptorState;
+import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
+import org.apache.tomcat.util.net.openssl.OpenSSLContext;
+import org.apache.tomcat.util.net.openssl.OpenSSLUtil;
+
+import javax.net.ssl.KeyManager;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -31,32 +46,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
-
-import javax.net.ssl.KeyManager;
-
-import org.apache.juli.logging.Log;
-import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.jni.Address;
-import org.apache.tomcat.jni.Error;
-import org.apache.tomcat.jni.File;
-import org.apache.tomcat.jni.Library;
-import org.apache.tomcat.jni.OS;
-import org.apache.tomcat.jni.Poll;
-import org.apache.tomcat.jni.Pool;
-import org.apache.tomcat.jni.SSL;
-import org.apache.tomcat.jni.SSLContext;
-import org.apache.tomcat.jni.SSLContext.SNICallBack;
-import org.apache.tomcat.jni.SSLSocket;
-import org.apache.tomcat.jni.Sockaddr;
-import org.apache.tomcat.jni.Socket;
-import org.apache.tomcat.jni.Status;
-import org.apache.tomcat.util.ExceptionUtils;
-import org.apache.tomcat.util.buf.ByteBufferUtils;
-import org.apache.tomcat.util.collections.SynchronizedStack;
-import org.apache.tomcat.util.net.AbstractEndpoint.Acceptor.AcceptorState;
-import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
-import org.apache.tomcat.util.net.openssl.OpenSSLContext;
-import org.apache.tomcat.util.net.openssl.OpenSSLUtil;
+import java.lang.Thread;
 
 
 /**
@@ -74,6 +64,14 @@ import org.apache.tomcat.util.net.openssl.OpenSSLUtil;
  * @author Mladen Turk
  * @author Remy Maucherat
  */
+
+//APR ApachePortable Runtime
+// Apache可移植运行库
+// APR有很多用途 包括访问高级IO功能(例如sendfile,epoll和OpenSSL)
+// OS级别功能(随机数生成，系统状态等等)
+// 本地进程管理(共享内存，NT管道和UNIX sockets)
+// 这些功能可以使Tomcat作为一个通常的前台WEB服务器,能更好地和其它本地web技术集成
+// 总体上让Java更有效率作为一个高性能web服务器平台而不是简单作为后台容器
 public class AprEndpoint extends AbstractEndpoint<Long> implements SNICallBack {
 
     // -------------------------------------------------------------- Constants

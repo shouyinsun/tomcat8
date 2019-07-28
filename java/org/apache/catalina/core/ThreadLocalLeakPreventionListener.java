@@ -17,25 +17,15 @@
 
 package org.apache.catalina.core;
 
-import java.util.concurrent.Executor;
-
-import org.apache.catalina.Container;
-import org.apache.catalina.ContainerEvent;
-import org.apache.catalina.ContainerListener;
-import org.apache.catalina.Context;
-import org.apache.catalina.Engine;
-import org.apache.catalina.Host;
-import org.apache.catalina.Lifecycle;
-import org.apache.catalina.LifecycleEvent;
-import org.apache.catalina.LifecycleListener;
-import org.apache.catalina.Server;
-import org.apache.catalina.Service;
+import org.apache.catalina.*;
 import org.apache.catalina.connector.Connector;
 import org.apache.coyote.ProtocolHandler;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.res.StringManager;
 import org.apache.tomcat.util.threads.ThreadPoolExecutor;
+
+import java.util.concurrent.Executor;
 
 /**
  * <p>
@@ -51,6 +41,17 @@ import org.apache.tomcat.util.threads.ThreadPoolExecutor;
  *
  * This listener must be declared in server.xml to be active.
  *
+ */
+
+//threadLocal 内存泄漏处理
+
+/***
+ * 在 ThreadLocal 中保存了对象A,而且对象A由 ParallelWebappClassLoader 加载,
+ * 那么就可以看成线程引用了对象A。由于 tomcat 中处理请求的是线程池,
+ * 意味着该线程会存活很长一段时间。webapp 热加载时,
+ * 会重新实例化一个 ParallelWebappClassLoader 对象,
+ * 如果线程未销毁,那么旧的 ParallelWebappClassLoader 也无法被回收,导致内存泄露。
+
  */
 public class ThreadLocalLeakPreventionListener implements LifecycleListener,
         ContainerListener {
@@ -91,6 +92,8 @@ public class ThreadLocalLeakPreventionListener implements LifecycleListener,
                 serverStopping = true;
             }
 
+            //ThreadLocal内存泄漏
+            // after_stop,毁线程池内的空闲线程
             if (Lifecycle.AFTER_STOP_EVENT.equals(event.getType()) &&
                     lifecycle instanceof Context) {
                 stopIdleThreads((Context) lifecycle);
@@ -214,6 +217,10 @@ public class ThreadLocalLeakPreventionListener implements LifecycleListener,
                     executor = handler.getExecutor();
                 }
 
+                // 销毁线程池 ThreadPoolExecutor
+                // 首先将任务队列设为 0,
+                // 再设置coreSize为0（会触发线程池内线程的interrupt）
+                // 从而销毁空闲的线程
                 if (executor instanceof ThreadPoolExecutor) {
                     ThreadPoolExecutor threadPoolExecutor =
                         (ThreadPoolExecutor) executor;

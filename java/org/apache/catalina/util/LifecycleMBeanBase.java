@@ -59,6 +59,10 @@ public abstract class LifecycleMBeanBase extends LifecycleBase
      * 为了保证jmx的正常注册和注销,
      * 要求子类在重写initInternal、先调用super.initInternal()
      * **/
+
+
+    //在initInternal阶段初始化MBeanServer实例
+    // 并且把当前实例注册到jmx中
     @Override
     protected void initInternal() throws LifecycleException {
 
@@ -81,6 +85,9 @@ public abstract class LifecycleMBeanBase extends LifecycleBase
     /***
      * 子类覆盖是最后调用super.destroyInternal()
      */
+
+
+    //destroyInternal阶段则根据ObjectName注销MBean
     @Override
     protected void destroyInternal() throws LifecycleException {
         unregister(oname);
@@ -108,7 +115,7 @@ public abstract class LifecycleMBeanBase extends LifecycleBase
             domain = getDomainInternal();
         }
 
-        if (domain == null) {
+        if (domain == null) {//默认 Catalina
             domain = Globals.DEFAULT_MBEAN_DOMAIN;
         }
 

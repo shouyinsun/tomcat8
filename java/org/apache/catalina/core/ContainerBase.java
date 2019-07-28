@@ -142,6 +142,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
     /**
      * The processor delay for this component.
      */
+    //后台处理线程延迟时间(s),小于0就是没有后台线程
     protected int backgroundProcessorDelay = -1;
 
 
@@ -897,17 +898,20 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         // Start our subordinate components, if any
         logger = null;
         getLogger();
+
         Cluster cluster = getClusterInternal();
-        if (cluster instanceof Lifecycle) {
+        if (cluster instanceof Lifecycle) {//cluster的启动
             ((Lifecycle) cluster).start();
         }
         Realm realm = getRealmInternal();
-        if (realm instanceof Lifecycle) {
+        if (realm instanceof Lifecycle) {//realm的启动
             ((Lifecycle) realm).start();
         }
 
         // Start our child containers, if any
-        // 获取子容器、把子容器的启动步骤放在线程中处理,默认情况下,只有一个线程处理
+        // 获取子容器、把子容器的启动步骤放在线程中处理
+        // startStopThreads=1
+        // 默认情况下,只有一个线程处理
         Container children[] = findChildren();
         List<Future<Void>> results = new ArrayList<>();
         for (int i = 0; i < children.length; i++) {
@@ -944,6 +948,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         setState(LifecycleState.STARTING);
 
         // Start our thread
+        //启动后台线程
         threadStart();
     }
 
@@ -1270,9 +1275,11 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         if (thread != null)
             return;
+        //backgroundProcessorDelay = -1 默认-1
         if (backgroundProcessorDelay <= 0)
             return;
 
+        //backgroundProcessorDelay >0 ,会启动后台处理守护线程
         threadDone = false;
         String threadName = "ContainerBackgroundProcessor[" + toString() + "]";
         thread = new Thread(new ContainerBackgroundProcessor(), threadName);
@@ -1337,11 +1344,15 @@ public abstract class ContainerBase extends LifecycleMBeanBase
             try {
                 while (!threadDone) {
                     try {
+                        //backgroundProcessorDelay
+                        // sleep 时长 (秒)
+                        //隔多久执行一次
                         Thread.sleep(backgroundProcessorDelay * 1000L);
                     } catch (InterruptedException e) {
                         // Ignore
                     }
                     if (!threadDone) {
+                        //调用 processChildren
                         processChildren(ContainerBase.this);
                     }
                 }
@@ -1355,7 +1366,9 @@ public abstract class ContainerBase extends LifecycleMBeanBase
             }
         }
 
+        //children 的 backgroundProcess
         protected void processChildren(Container container) {
+
             ClassLoader originalClassLoader = null;
 
             try {
@@ -1370,6 +1383,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                     // is performed under the web app's class loader
                     originalClassLoader = ((Context) container).bind(false, null);
                 }
+                //子类实现
                 container.backgroundProcess();
                 Container[] children = container.findChildren();
                 for (int i = 0; i < children.length; i++) {

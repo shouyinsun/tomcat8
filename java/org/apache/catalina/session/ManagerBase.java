@@ -512,7 +512,10 @@ public abstract class ManagerBase extends LifecycleMBeanBase implements Manager 
      * Direct call to {@link #processExpires()}
      */
     @Override
-    public void backgroundProcess() {
+    public void backgroundProcess() {//清理过期session
+        //backgroundProcessorDelay 默认是10s
+        //processExpiresFrequency 是 6,隔6次才执行一次
+        // 相当于 每隔60s 清理一次过期session
         count = (count + 1) % processExpiresFrequency;
         if (count == 0)
             processExpires();
@@ -530,6 +533,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase implements Manager 
         if(log.isDebugEnabled())
             log.debug("Start expire sessions " + getName() + " at " + timeNow + " sessioncount " + sessions.length);
         for (int i = 0; i < sessions.length; i++) {
+            //isValid 过期操作
             if (sessions[i]!=null && !sessions[i].isValid()) {
                 expireHere++;
             }
@@ -623,6 +627,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase implements Manager 
     @Override
     public Session createSession(String sessionId) {//创建session
 
+        //限制 session 数量,默认不做限制
         if ((maxActiveSessions >= 0) &&
                 (getActiveSessions() >= maxActiveSessions)) {
             rejectedSessions++;
@@ -632,20 +637,26 @@ public abstract class ManagerBase extends LifecycleMBeanBase implements Manager 
         }
 
         // Recycle or create a Session instance
+        // 创建 StandardSession 实例,子类可以重写该方法
         Session session = createEmptySession();
 
         // Initialize the properties of the new session and return it
         session.setNew(true);
         session.setValid(true);
         session.setCreationTime(System.currentTimeMillis());
+        // 设置最大不活跃时间(单位s)
+        // 如果超过这个时间,仍然没有请求的话该Session将会失效
         session.setMaxInactiveInterval(getContext().getSessionTimeout() * 60);
         String id = sessionId;
         if (id == null) {
+            //sessionId为空,创建sessionId
             id = generateSessionId();
         }
         session.setId(id);
         sessionCounter++;
 
+        // 将创建时间添加到LinkedList中
+        // 并且把最先添加的时间移除,主要还是方便清理过期session
         SessionTiming timing = new SessionTiming(session.getCreationTime(), 0);
         synchronized (sessionCreationTiming) {
             sessionCreationTiming.add(timing);
@@ -789,6 +800,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase implements Manager 
      * @return a new session for use with this manager
      */
     protected StandardSession getNewSession() {
+        //默认 StandardSession
         return new StandardSession(this);
     }
 

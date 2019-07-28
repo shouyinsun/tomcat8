@@ -16,6 +16,9 @@
  */
 package org.apache.catalina.startup;
 
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -24,15 +27,14 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.Properties;
 
-import org.apache.juli.logging.Log;
-import org.apache.juli.logging.LogFactory;
-
 
 /**
  * Utility class to read the bootstrap Catalina configuration.
  *
  * @author Remy Maucherat
  */
+
+//加载 catalina.properties 里的配置
 public class CatalinaProperties {
 
     private static final Log log = LogFactory.getLog(CatalinaProperties.class);

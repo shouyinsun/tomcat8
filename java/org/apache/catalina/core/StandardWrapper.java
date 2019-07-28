@@ -95,6 +95,7 @@ public class StandardWrapper extends ContainerBase
     /**
      * The facade associated with this wrapper.
      */
+    // Wrapper 的门面模式
     protected final StandardWrapperFacade facade = new StandardWrapperFacade(this);
 
 
@@ -1567,6 +1568,7 @@ public class StandardWrapper extends ContainerBase
 
         // Send j2ee.state.starting notification
         if (this.getObjectName() != null) {
+            // 发出 j2ee.state.starting 事件通知
             Notification notification = new Notification("j2ee.state.starting",
                                                         this.getObjectName(),
                                                         sequenceNumber++);
@@ -1580,6 +1582,7 @@ public class StandardWrapper extends ContainerBase
 
         // Send j2ee.state.running notification
         if (this.getObjectName() != null) {
+            // 发出 j2ee.state.running 事件通知
             Notification notification =
                 new Notification("j2ee.state.running", this.getObjectName(),
                                 sequenceNumber++);

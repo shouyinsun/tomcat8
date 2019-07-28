@@ -17,13 +17,9 @@
  */
 package org.apache.tomcat.util.bcel.classfile;
 
-import java.io.BufferedInputStream;
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
 import org.apache.tomcat.util.bcel.Const;
+
+import java.io.*;
 
 /**
  * Wrapper class that parses a given Java .class file. The method <A
@@ -37,6 +33,7 @@ import org.apache.tomcat.util.bcel.Const;
  * JVM specification 1.0</a>. See this paper for
  * further details about the structure of a bytecode file.
  */
+//Byte Code Engineering Library,专门用于解析 class 字节码
 public final class ClassParser {
 
     private static final int MAGIC = 0xCAFEBABE;

@@ -16,32 +16,19 @@
  */
 package org.apache.catalina.session;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-
-import javax.servlet.ServletContext;
-
-import org.apache.catalina.Context;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.LifecycleState;
-import org.apache.catalina.Loader;
-import org.apache.catalina.Session;
+import org.apache.catalina.*;
 import org.apache.catalina.security.SecurityUtil;
 import org.apache.catalina.util.CustomObjectInputStream;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.ExceptionUtils;
+
+import javax.servlet.ServletContext;
+import java.io.*;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
 
 /**
  * Standard implementation of the <b>Manager</b> interface that provides
@@ -54,6 +41,17 @@ import org.apache.tomcat.util.ExceptionUtils;
  * <code>stop()</code> methods of this class at the correct times.
  *
  * @author Craig R. McClanahan
+ */
+
+/***
+ * Manager 默认实现,在内存中管理 session,宕机将导致 session 丢失
+ *
+ * 但是当调用 Lifecycle 的 start/stop 接口时
+ * 将采用 jdk 序列化保存 Session 信息
+ *
+ * 因此当 tomcat 发现某个应用的文件有变更进行 reload 操作时
+ * 这种情况下不会丢失 Session 信息
+
  */
 public class StandardManager extends ManagerBase {
 
@@ -208,6 +206,7 @@ public class StandardManager extends ManagerBase {
                 try (ObjectInputStream ois = new CustomObjectInputStream(bis, classLoader, logger,
                         getSessionAttributeValueClassNamePattern(),
                         getWarnOnSessionAttributeFilterFailure())) {
+                    //jdk反序列化
                     Integer count = (Integer) ois.readObject();
                     int n = count.intValue();
                     if (log.isDebugEnabled())
@@ -304,6 +303,7 @@ public class StandardManager extends ManagerBase {
                     log.debug("Unloading " + sessions.size() + " sessions");
                 }
                 // Write the number of active sessions, followed by the details
+                //jdk序列化
                 oos.writeObject(Integer.valueOf(sessions.size()));
                 for (Session s : sessions.values()) {
                     StandardSession session = (StandardSession) s;
@@ -348,6 +348,7 @@ public class StandardManager extends ManagerBase {
 
         // Load unloaded sessions, if any
         try {
+            //启动时进行加载
             load();
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
@@ -376,6 +377,7 @@ public class StandardManager extends ManagerBase {
 
         // Write out sessions
         try {
+            //停止是进行上载,保存
             unload();
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);

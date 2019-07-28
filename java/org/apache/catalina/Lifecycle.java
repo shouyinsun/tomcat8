@@ -239,6 +239,7 @@ public interface Lifecycle {
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
+    //事件：BEFORE_START_EVENT -> START_EVENT -> AFTER_START_EVENT
     public void start() throws LifecycleException;
 
 

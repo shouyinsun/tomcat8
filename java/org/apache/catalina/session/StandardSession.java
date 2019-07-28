@@ -16,49 +16,22 @@
  */
 package org.apache.catalina.session;
 
-import java.beans.PropertyChangeSupport;
-import java.io.IOException;
-import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.io.WriteAbortedException;
-import java.security.AccessController;
-import java.security.Principal;
-import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionActivationListener;
-import javax.servlet.http.HttpSessionAttributeListener;
-import javax.servlet.http.HttpSessionBindingEvent;
-import javax.servlet.http.HttpSessionBindingListener;
-import javax.servlet.http.HttpSessionEvent;
-import javax.servlet.http.HttpSessionIdListener;
-import javax.servlet.http.HttpSessionListener;
-
-import org.apache.catalina.Context;
-import org.apache.catalina.Globals;
-import org.apache.catalina.Manager;
-import org.apache.catalina.Session;
-import org.apache.catalina.SessionEvent;
-import org.apache.catalina.SessionListener;
-import org.apache.catalina.TomcatPrincipal;
+import org.apache.catalina.*;
 import org.apache.catalina.security.SecurityUtil;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.res.StringManager;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.*;
+import java.beans.PropertyChangeSupport;
+import java.io.*;
+import java.security.AccessController;
+import java.security.Principal;
+import java.security.PrivilegedAction;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Standard implementation of the <b>Session</b> interface.  This object is
@@ -191,6 +164,8 @@ public class StandardSession implements HttpSession, Session, Serializable {
     /**
      * The session event listeners for this Session.
      */
+
+    //session 监听
     protected transient ArrayList<SessionListener> listeners = new ArrayList<>();
 
 
@@ -676,9 +651,10 @@ public class StandardSession implements HttpSession, Session, Serializable {
             return true;
         }
 
-        if (maxInactiveInterval > 0) {
+        if (maxInactiveInterval > 0) {//最大不活跃间隔
             int timeIdle = (int) (getIdleTimeInternal() / 1000L);
             if (timeIdle >= maxInactiveInterval) {
+                //过期操作
                 expire(true);
             }
         }
@@ -722,7 +698,7 @@ public class StandardSession implements HttpSession, Session, Serializable {
      * End the access.
      */
     @Override
-    public void endAccess() {
+    public void endAccess() {//更新access时间
 
         isNew = false;
 
@@ -816,6 +792,7 @@ public class StandardSession implements HttpSession, Session, Serializable {
                             int j = (listeners.length - 1) - i;
                             if (!(listeners[j] instanceof HttpSessionListener))
                                 continue;
+                            //http的HttpSessionListener
                             HttpSessionListener listener =
                                 (HttpSessionListener) listeners[j];
                             try {
@@ -847,10 +824,12 @@ public class StandardSession implements HttpSession, Session, Serializable {
             }
 
             // Remove this session from our manager's active sessions
+            //从 manager 中移除该  session
             manager.remove(this, true);
 
             // Notify interested session event listeners
             if (notify) {
+                //tomcat 的 SessionListener
                 fireSessionEvent(Session.SESSION_DESTROYED_EVENT, null);
             }
 

@@ -16,9 +16,6 @@
  */
 package org.apache.catalina.ha.session;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.catalina.DistributedManager;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
@@ -32,9 +29,16 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.res.StringManager;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  *@version 1.0
  */
+
+//用于 Tomcat 集群的会话管理器
+// 与DeltaManager不同的是
+// 某个节点变更 Session 信息的改变只会同步给集群中的另一个 backup 节点
 public class BackupManager extends ClusterManagerBase
         implements MapOwner, DistributedManager {
 

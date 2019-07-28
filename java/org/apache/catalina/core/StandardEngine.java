@@ -43,6 +43,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * StandardEngine只有一个子容器StandardHost
  * 一个StandardContext对应一个webapp应用
  * 而一个StandardWrapper对应一个webapp里面的一个 Servlet
+ *
+ * StandardEngine 中 backgroundProcessorDelay 为 10s
+ * 子类继承这个值
 
 
  */
@@ -67,6 +70,8 @@ public class StandardEngine extends ContainerBase implements Engine {
             log.warn(sm.getString("standardEngine.jvmRouteFail"));
         }
         // By default, the engine will hold the reloading thread
+
+        //后台线程延迟 默认 10s
         backgroundProcessorDelay = 10;
 
     }
@@ -234,6 +239,7 @@ public class StandardEngine extends ContainerBase implements Engine {
     protected void initInternal() throws LifecycleException {
         // Ensure that a Realm is present before any attempt is made to start
         // one. This will create the default NullRealm if necessary.
+        //获取Realm 为null默认 NullRealm
         getRealm();
         super.initInternal();
     }

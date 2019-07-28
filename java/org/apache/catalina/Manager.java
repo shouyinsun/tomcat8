@@ -37,6 +37,8 @@ import java.io.IOException;
  *
  * @author Craig R. McClanahan
  */
+
+//manage 管理context的session
 public interface Manager {
 
     // ------------------------------------------------------------- Properties

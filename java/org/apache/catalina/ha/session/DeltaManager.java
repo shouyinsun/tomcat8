@@ -17,20 +17,7 @@
 
 package org.apache.catalina.ha.session;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-
-import org.apache.catalina.Engine;
-import org.apache.catalina.Host;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.LifecycleState;
-import org.apache.catalina.Session;
+import org.apache.catalina.*;
 import org.apache.catalina.ha.ClusterManager;
 import org.apache.catalina.ha.ClusterMessage;
 import org.apache.catalina.session.ManagerBase;
@@ -40,6 +27,11 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.res.StringManager;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
 
 /**
  * The DeltaManager manages replicated sessions by only replicating the deltas
@@ -56,6 +48,10 @@ import org.apache.tomcat.util.res.StringManager;
  * @author Craig R. McClanahan
  * @author Peter Rossbach
  */
+
+//增量 Session 管理器,用于Tomcat集群的会话管理器
+// 某个节点变更 Session 信息都会同步到集群中的所有节点
+// 这样可以保证 Session 信息的实时性,但是这样会带来较大的网络开销
 public class DeltaManager extends ClusterManagerBase{
 
     // ---------------------------------------------------- Security Classes

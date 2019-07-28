@@ -711,6 +711,7 @@ public class ContextConfig implements LifecycleListener {
                     Boolean.valueOf(context.getXmlNamespaceAware())));
         }
 
+        //web 配置
         webConfig();
 
         if (!context.getIgnoreAnnotations()) {
@@ -1040,6 +1041,9 @@ public class ContextConfig implements LifecycleListener {
          *   those in JARs excluded from an absolute ordering) need to be
          *   scanned to check if they match.
          */
+        //通过 WebXmlParser 对 web.xml 进行解析
+        // 如果存在 web.xml 文件
+        // 则会把文件中定义的 Servlet、Filter、Listener 注册到 WebXml 实例中
         WebXmlParser webXmlParser = new WebXmlParser(context.getXmlNamespaceAware(),
                 context.getXmlValidation(), context.getXmlBlockExternal());
 
@@ -1071,12 +1075,13 @@ public class ContextConfig implements LifecycleListener {
                 WebXml.orderWebFragments(webXml, fragments, sContext);
 
         // Step 3. Look for ServletContainerInitializer implementations
-        if (ok) {
+        if (ok) {//处理 ServletContainerInitializer
             processServletContainerInitializers();
         }
 
         if  (!webXml.isMetadataComplete() || typeInitializerMap.size() > 0) {
             // Steps 4 & 5.
+            //处理class
             processClasses(webXml, orderedFragments);
         }
 
@@ -1093,12 +1098,13 @@ public class ContextConfig implements LifecycleListener {
             webXml.merge(defaults);
 
             // Step 8. Convert explicitly mentioned jsps to servlets
-            if (ok) {
+            if (ok) {//jsp 转为 servlet
                 convertJsps(webXml);
             }
 
             // Step 9. Apply merged web.xml to Context
-            if (ok) {
+            if (ok) {//WebXml装载的配置赋值给 ServletContext
+                //会往Context中添加子容器 Wrapper,即 Servlet
                 configureContext(webXml);
             }
         } else {
@@ -1133,7 +1139,7 @@ public class ContextConfig implements LifecycleListener {
 
         // Step 11. Apply the ServletContainerInitializer config to the
         // context
-        if (ok) {
+        if (ok) {//ServletContainerInitializer 配置应用到context
             for (Map.Entry<ServletContainerInitializer,
                     Set<Class<?>>> entry :
                         initializerClassMap.entrySet()) {
@@ -1155,15 +1161,17 @@ public class ContextConfig implements LifecycleListener {
         Map<String, JavaClassCacheEntry> javaClassCache = new HashMap<>();
 
         if (ok) {
-            WebResource[] webResources =
+            WebResource[] webResources =///WEB-INF/classes 目录
                     context.getResources().listResources("/WEB-INF/classes");
 
             for (WebResource webResource : webResources) {
                 // Skip the META-INF directory from any JARs that have been
                 // expanded in to WEB-INF/classes (sometimes IDEs do this).
+                //跳过 META-INF
                 if ("META-INF".equals(webResource.getName())) {
                     continue;
                 }
+                //处理AnnotationsWebResource
                 processAnnotationsWebResource(webResource, webXml,
                         webXml.isMetadataComplete(), javaClassCache);
             }
@@ -1271,7 +1279,7 @@ public class ContextConfig implements LifecycleListener {
         for (ContextService service : webxml.getServiceRefs().values()) {
             context.getNamingResources().addService(service);
         }
-        // 往 Context 中添加子容器 Wrapper，即 Servlet
+        // 往 Context 中添加子容器 Wrapper,即 Servlet
         for (ServletDef servlet : webxml.getServlets().values()) {
             Wrapper wrapper = context.createWrapper();
             // Description is ignored
@@ -1584,6 +1592,7 @@ public class ContextConfig implements LifecycleListener {
 
             HandlesTypes ht;
             try {
+                //HandlesTypes 注解
                 ht = sci.getClass().getAnnotation(HandlesTypes.class);
             } catch (Exception e) {
                 if (log.isDebugEnabled()) {
@@ -1999,7 +2008,9 @@ public class ContextConfig implements LifecycleListener {
             boolean handlesTypesOnly, Map<String,JavaClassCacheEntry> javaClassCache)
             throws ClassFormatException, IOException {
 
+        //is 即 class 字节码文件的 IO 流
         ClassParser parser = new ClassParser(is);
+        // 使用 JavaClass 封装 class 相关的信息
         JavaClass clazz = parser.parse();
         checkHandlesTypes(clazz, javaClassCache);
 
@@ -2015,6 +2026,8 @@ public class ContextConfig implements LifecycleListener {
         AnnotationEntry[] annotationsEntries = clazz.getAnnotationEntries();
         if (annotationsEntries != null) {
             String className = clazz.getClassName();
+            //servlet 3.0 的注解
+            //处理 WebServlet、WebFilter、WebListener
             for (AnnotationEntry ae : annotationsEntries) {
                 String type = ae.getAnnotationType();
                 if ("Ljavax/servlet/annotation/WebServlet;".equals(type)) {

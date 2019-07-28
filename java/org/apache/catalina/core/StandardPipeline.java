@@ -45,7 +45,8 @@ import java.util.Set;
 
 /****
  * Pipeline是管道组件,用于封装了一组有序的Valve,便于Valve顺序地传递或者处理请求
- * Valve 是阀门组件,穿插在 Container 容器中,可以把它理解成请求拦截器,在 tomcat 接收到网络请求与触发 Servlet 之间执行
+ * Valve 是阀门组件,穿插在 Container 容器中,可以把它理解成请求拦截器
+ * 在 tomcat 接收到网络请求与触发 Servlet 之间执行
  */
 public class StandardPipeline extends LifecycleBase
         implements Pipeline, Contained {
@@ -106,7 +107,7 @@ public class StandardPipeline extends LifecycleBase
     public boolean isAsyncSupported() {
         Valve valve = (first!=null)?first:basic;
         boolean supported = true;
-        while (supported && valve!=null) {
+        while (supported && valve!=null) {//有一个支持就是支持
             supported = supported & valve.isAsyncSupported();
             valve = valve.getNext();
         }
@@ -173,6 +174,8 @@ public class StandardPipeline extends LifecycleBase
         if (current == null) {
             current = basic;
         }
+        //遍历 Valve 链表
+        // 如果 Valve 是 Lifecycle 的子类,调用其 stop 方法停止 Valve 组件
         while (current != null) {
             if (current instanceof Lifecycle)
                 ((Lifecycle) current).start();
@@ -197,7 +200,7 @@ public class StandardPipeline extends LifecycleBase
 
         // Stop the Valves in our pipeline (including the basic), if any
         //遍历 Valve 链表
-        // 如果 Valve 是 Lifecycle 的子类,调用其 start 方法启动 Valve 组件
+        // 如果 Valve 是 Lifecycle 的子类,调用其 stop 方法停止 Valve 组件
         Valve current = first;
         if (current == null) {
             current = basic;
@@ -334,7 +337,7 @@ public class StandardPipeline extends LifecycleBase
      *  associated with a different Container
      */
     @Override
-    public void addValve(Valve valve) {
+    public void addValve(Valve valve) {//放到basic valve的前面
 
         // Validate that we can add this Valve
         if (valve instanceof Contained)

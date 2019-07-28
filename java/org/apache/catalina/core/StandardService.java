@@ -409,22 +409,25 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         setState(LifecycleState.STARTING);
 
         // Start our defined Container first
+        //启动Engine,Engine的child容器都会被启动,webapp的部署会在这个步骤完成
         if (engine != null) {
             synchronized (engine) {
                 engine.start();
             }
         }
 
+        // 启动Executor线程池
         synchronized (executors) {
             for (Executor executor: executors) {
                 executor.start();
             }
         }
 
+        // 启动MapperListener
         mapperListener.start();
 
         // Start our defined Connectors second
-        synchronized (connectorsLock) {
+        synchronized (connectorsLock) {// 启动Connector
             for (Connector connector: connectors) {
                 try {
                     // If it has already failed, don't try and start it

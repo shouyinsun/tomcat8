@@ -17,19 +17,6 @@
 
 package org.apache.catalina.core;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.URLConnection;
-import java.sql.DriverManager;
-import java.util.StringTokenizer;
-import java.util.concurrent.ForkJoinPool;
-
-import javax.imageio.ImageIO;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleEvent;
 import org.apache.catalina.LifecycleListener;
@@ -42,6 +29,18 @@ import org.apache.tomcat.util.compat.JreVendor;
 import org.apache.tomcat.util.res.StringManager;
 import org.w3c.dom.Document;
 import org.w3c.dom.ls.DOMImplementationLS;
+
+import javax.imageio.ImageIO;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URLConnection;
+import java.sql.DriverManager;
+import java.util.StringTokenizer;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * Provide a workaround for known places where the Java Runtime environment can
@@ -57,6 +56,9 @@ import org.w3c.dom.ls.DOMImplementationLS;
  * first disabling Jar URL connection caching. The workaround is to disable this
  * caching by default.
  */
+
+
+//处理jre内存泄漏
 public class JreMemoryLeakPreventionListener implements LifecycleListener {
 
     private static final Log log =
@@ -233,6 +235,8 @@ public class JreMemoryLeakPreventionListener implements LifecycleListener {
     @Override
     public void lifecycleEvent(LifecycleEvent event) {
         // Initialise these classes when Tomcat starts
+
+        //before_init 事件
         if (Lifecycle.BEFORE_INIT_EVENT.equals(event.getType())) {
 
             /*
@@ -256,6 +260,7 @@ public class JreMemoryLeakPreventionListener implements LifecycleListener {
             {
                 // Use the system classloader as the victim for all this
                 // ClassLoader pinning we're about to do.
+                // 当线程上下文类加载器指定为系统类加载器
                 Thread.currentThread().setContextClassLoader(
                         ClassLoader.getSystemClassLoader());
 
@@ -281,6 +286,7 @@ public class JreMemoryLeakPreventionListener implements LifecycleListener {
                 // Trigger a call to sun.awt.AppContext.getAppContext(). This
                 // will pin the system class loader in memory but that shouldn't
                 // be an issue.
+                // 避免开启的子线程持有 ParallelWebappClassLoader 引用
                 if (appContextProtection && !JreCompat.isJre8Available()) {
                     ImageIO.getCacheDirectory();
                 }
@@ -385,6 +391,8 @@ public class JreMemoryLeakPreventionListener implements LifecycleListener {
                  *
                  * Fixed in Java 9 onwards (from early access build 133)
                  */
+
+                // 避免持有 ParallelWebappClassLoader 引用
                 if (tokenPollerProtection && !JreCompat.isJre9Available()) {
                     java.security.Security.getProviders();
                 }
@@ -487,6 +495,7 @@ public class JreMemoryLeakPreventionListener implements LifecycleListener {
                 }
 
             } finally {
+                // 再重置为 ParallelWebappClassLoader
                 Thread.currentThread().setContextClassLoader(loader);
             }
         }

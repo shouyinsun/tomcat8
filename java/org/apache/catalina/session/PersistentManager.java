@@ -31,6 +31,9 @@ package org.apache.catalina.session;
  *
  * @author Kief Morris (kief@kief.com)
  */
+
+//当会话长时间空闲时,会把 Session 信息写入磁盘,从而限制内存中的活动会话数量
+// 支持容错,会定期将内存中的 Session 信息备份到磁盘
 public final class PersistentManager extends PersistentManagerBase {
 
     // ----------------------------------------------------- Instance Variables

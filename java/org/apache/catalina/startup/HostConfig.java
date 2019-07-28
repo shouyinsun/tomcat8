@@ -272,7 +272,7 @@ public class HostConfig implements LifecycleListener {
     public void lifecycleEvent(LifecycleEvent event) {
 
         // Identify the host we are associated with
-        // (省略若干代码) 判断事件是否由 Host 发出,并且为 HostConfig 设置属性
+        // 判断事件是否由 Host 发出,并且为 HostConfig 设置属性
         try {
             host = (Host) event.getLifecycle();
             if (host instanceof StandardHost) {
@@ -1116,6 +1116,7 @@ public class HostConfig implements LifecycleListener {
             context.setPath(cn.getPath());
             context.setWebappVersion(cn.getVersion());
             context.setDocBase(cn.getBaseName());
+            //context作为host的子容器
             host.addChild(context);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);

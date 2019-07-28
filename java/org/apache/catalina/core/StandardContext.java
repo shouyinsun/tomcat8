@@ -405,6 +405,7 @@ public class StandardContext extends ContainerBase
     /**
      * The reloadable flag for this web application.
      */
+
     private boolean reloadable = false;
 
 
@@ -4929,9 +4930,12 @@ public class StandardContext extends ContainerBase
         }
 
         // Post work directory
+        //创建工作目录
         postWorkDirectory();
 
         // Add missing components as necessary
+        //实例化 WebResourceRoot
+        // 默认实现类是 StandardRoot,用于读取 webapp 的文件资源
         if (getResources() == null) {   // (1) Required by Loader
             if (log.isDebugEnabled())
                 log.debug("Configuring default Resources");
@@ -4947,7 +4951,9 @@ public class StandardContext extends ContainerBase
             resourcesStart();
         }
 
-        if (getLoader() == null) {
+        // 实例化 Loader 实例,是 tomcat 对于 ClassLoader 的封装
+        // 用于支持在运行期间热加载 class
+        if (getLoader() == null) { //实例化 Loader 对象 webappLoader
             WebappLoader webappLoader = new WebappLoader(getParentClassLoader());
             webappLoader.setDelegate(getDelegate());
             setLoader(webappLoader);
@@ -4999,15 +5005,20 @@ public class StandardContext extends ContainerBase
 
 
         // Binding thread
+        // 将 Loader 中的 ParallelWebappClassLoader 绑定到当前线程中
+        // 并返回 catalina 先前的类加载器
         ClassLoader oldCCL = bindThread();
 
         try {
             if (ok) {
                 // Start our subordinate components, if any
+                // 如果 Loader 是 Lifecycle 实现类,则启动该 Loader
                 Loader loader = getLoader();
                 if (loader instanceof Lifecycle) {
                     ((Lifecycle) loader).start();
                 }
+
+                // 设置 ClassLoader 的各种属性
 
                 // since the loader just started, the webapp classloader is now
                 // created.
@@ -5026,6 +5037,8 @@ public class StandardContext extends ContainerBase
 
                 // By calling unbindThread and bindThread in a row, we setup the
                 // current Thread CCL to be the webapp classloader
+
+                //解绑定,原来的classLoader设置回去
                 unbindThread(oldCCL);
                 oldCCL = bindThread();
 
@@ -5058,9 +5071,11 @@ public class StandardContext extends ContainerBase
                 }
 
                 // Notify our interested LifecycleListeners
+                //发送 CONFIGURE_START_EVENT 事件,ContextConfig监听进行处理
                 fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);
 
                 // Start our child containers, if not already started
+                // 启动子容器
                 for (Container child : findChildren()) {
                     if (!child.getState().isAvailable()) {
                         child.start();
@@ -5159,6 +5174,8 @@ public class StandardContext extends ContainerBase
             }
 
             // Configure and call application event listeners
+            //调用 listenerStart
+            // 实例化 servlet 相关的各种 Listener,并且调用ServletContextListener
             if (ok) {
                 if (!listenerStart()) {
                     log.error(sm.getString("standardContext.listenerFail"));
@@ -5185,6 +5202,7 @@ public class StandardContext extends ContainerBase
             }
 
             // Configure and call application filters
+            //处理 Filter
             if (ok) {
                 if (!filterStart()) {//初始化 Filter
                     log.error(sm.getString("standardContext.filterFail"));
@@ -5208,6 +5226,7 @@ public class StandardContext extends ContainerBase
             super.threadStart();
         } finally {
             // Unbinding thread
+            //解绑定
             unbindThread(oldCCL);
         }
 
@@ -5527,6 +5546,8 @@ public class StandardContext extends ContainerBase
     }
 
 
+
+    //StandardContext的后台线程处理
     @Override
     public void backgroundProcess() {
 
@@ -5832,6 +5853,7 @@ public class StandardContext extends ContainerBase
             PrivilegedAction<Void> pa = new PrivilegedSetTccl(originalClassLoader);
             AccessController.doPrivileged(pa);
         } else {
+            //上下文classLoader 设置回去
             Thread.currentThread().setContextClassLoader(originalClassLoader);
         }
     }

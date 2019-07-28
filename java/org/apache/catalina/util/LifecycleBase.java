@@ -93,6 +93,7 @@ public abstract class LifecycleBase implements Lifecycle {
     }
 
 
+    //会涉及多线程,synchronized
     @Override
     public final synchronized void init() throws LifecycleException {
         if (!state.equals(LifecycleState.NEW)) {
@@ -118,6 +119,7 @@ public abstract class LifecycleBase implements Lifecycle {
     /**
      * {@inheritDoc}
      */
+    //会涉及多线程,synchronized
     @Override
     public final synchronized void start() throws LifecycleException {
 
@@ -147,6 +149,7 @@ public abstract class LifecycleBase implements Lifecycle {
 
         try {
             setStateInternal(LifecycleState.STARTING_PREP, null, false);
+            //子类实现
             startInternal();
             if (state.equals(LifecycleState.FAILED)) {
                 // This is a 'controlled' failure. The component put itself into the
@@ -191,6 +194,7 @@ public abstract class LifecycleBase implements Lifecycle {
     /**
      * {@inheritDoc}
      */
+    //会涉及多线程,synchronized
     @Override
     public final synchronized void stop() throws LifecycleException {
 
@@ -225,7 +229,7 @@ public abstract class LifecycleBase implements Lifecycle {
             } else {
                 setStateInternal(LifecycleState.STOPPING_PREP, null, false);
             }
-
+            //子类实现
             stopInternal();
 
             // Shouldn't be necessary but acts as a check that sub-classes are
