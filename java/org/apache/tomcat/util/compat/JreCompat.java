@@ -145,11 +145,13 @@ public class JreCompat {
      *
      * @throws IOException If a dummy JAR URLConnection can not be created
      */
+    //禁用URLConnection 缓存
     public void disableCachingForJarUrlConnections() throws IOException {
         // Doesn't matter that this JAR doesn't exist - just as
         // long as the URL is well-formed
         URL url = new URL("jar:file://dummy.jar!/");
         URLConnection uConn = url.openConnection();
+        //cache 禁用
         uConn.setDefaultUseCaches(false);
     }
 

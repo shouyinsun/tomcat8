@@ -413,6 +413,12 @@ public class JreMemoryLeakPreventionListener implements LifecycleListener {
                  */
 
                 // Set the default URL caching policy to not to cache
+                // 在 Windows 系统下使用 URLConnection 读取本地 jar 包的资源时
+                // 它会将资源缓存起来,会导致该jar包资源被锁
+                // 如果这个时候使用war包进行重新部署,需要解压war包再把原来目录下面的jar包删除,
+                // 由于jar包资源被锁,导致删除失败,重新部署自然也会失败
+
+                //tomcat 禁用了URLConnection 的缓存
                 if (urlCacheProtection) {
                     try {
                         JreCompat.getInstance().disableCachingForJarUrlConnections();

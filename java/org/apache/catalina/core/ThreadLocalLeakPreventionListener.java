@@ -93,7 +93,8 @@ public class ThreadLocalLeakPreventionListener implements LifecycleListener,
             }
 
             //ThreadLocal内存泄漏
-            // after_stop,毁线程池内的空闲线程
+            // context关闭之后,after_stop
+            // 毁线程池内的空闲线程
             if (Lifecycle.AFTER_STOP_EVENT.equals(event.getType()) &&
                     lifecycle instanceof Context) {
                 stopIdleThreads((Context) lifecycle);
@@ -211,9 +212,10 @@ public class ThreadLocalLeakPreventionListener implements LifecycleListener,
         Connector[] connectors = service.findConnectors();
         if (connectors != null) {
             for (Connector connector : connectors) {
+                //connector的protoHandler
                 ProtocolHandler handler = connector.getProtocolHandler();
                 Executor executor = null;
-                if (handler != null) {
+                if (handler != null) {//protocolHandler的线程池
                     executor = handler.getExecutor();
                 }
 
